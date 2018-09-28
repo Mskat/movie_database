@@ -12,24 +12,24 @@ public class MovieDAO {
     public List<Movie> movies;
 
     public MovieDAO() {
-        this.movies = new ArrayList<Movie>();
+        this.movies = new ArrayList<>();
     }
 
-    public Movie addMovie(Movie movie){
+    public Movie addMovie(Movie movie) {
         movies.add(movie);
         return movie;
     }
 
-    public List<Movie> getMovies(){
-        return movies;
+    public void setMarkMovie(String title, Movie movie) {
+        String oldTitle = movie.getTitle();
+        String newTitle = "WYPOŻYCZONY " + oldTitle;
+        movie.setTitle(newTitle);
     }
 
-    public Movie getMovieById(Long id) {
-        if(id<movies.size()){
-            return movies.get(Math.toIntExact(id));
-        }else{
-            return null;
-        }
+    public void deleteMovie(String title, Movie movie) {
+        String oldTitle = movie.getTitle();
+        String newTitle = oldTitle.replaceAll("WYPOŻYCZONY ", "");
+        movie.setTitle(newTitle);
     }
 
 }

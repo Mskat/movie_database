@@ -8,6 +8,9 @@
 </head>
 <body>
 <a href="<c:url value="add" />">Dodaj film</a><br />
+<a href="<c:url value="mark"/>">Dodaj film do wypożyczonych</a><br>
+<a href="<c:url value="unmark"/>">Usuń film z wypożyczonych</a><br>
+
 <table border="1">
     <thead>
     <tr>

@@ -25,7 +25,7 @@ public class MovieController {
     private MovieDAO movieDao;
 
     @RequestMapping("/list")
-    public String movieList(Model model){
+    public String getMovieList(Model model) {
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("myDatabase");
         EntityManager entityManager = entityManagerFactory.createEntityManager();
 
@@ -39,8 +39,8 @@ public class MovieController {
     }
 
     @RequestMapping("/add")
-    public String addMovie(HttpServletRequest request, @ModelAttribute("movieDto") @Valid MovieDTO movieDto, BindingResult result){
-        if(request.getMethod().equalsIgnoreCase("post") && !result.hasErrors()){
+    public String addMovie(HttpServletRequest request, @ModelAttribute("movieDto") @Valid MovieDTO movieDto, BindingResult result) {
+        if (request.getMethod().equalsIgnoreCase("post") && !result.hasErrors()) {
 
             EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("myDatabase");
             EntityManager entityManager = entityManagerFactory.createEntityManager();
@@ -51,14 +51,14 @@ public class MovieController {
             m.setTitle(movieDto.getTitle());
             m.setAuthor(movieDto.getAuthor());
 
+            movieDao.addMovie(m);
+
             entityManager.getTransaction().begin();
             entityManager.persist(m);
             entityManager.getTransaction().commit();
 
             entityManager.close();
             entityManagerFactory.close();
-
-            movieDao.addMovie(m);
 
             return "redirect:/list";
         }
@@ -71,8 +71,77 @@ public class MovieController {
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("myDatabase");
         EntityManager entityManager = entityManagerFactory.createEntityManager();
 
+        entityManager.getTransaction().begin();
         model.addAttribute("movie", entityManager.find(Movie.class, id));
+        entityManager.getTransaction().commit();
+
+        entityManager.close();
+        entityManagerFactory.close();
 
         return "details";
+    }
+
+    @RequestMapping("/mark")
+    public String chooseMovieToMark(Model model) {
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("myDatabase");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        TypedQuery<Movie> query = entityManager.createQuery("select m from Movie m", Movie.class);
+        model.addAttribute("movies", query.getResultList());
+
+        entityManager.close();
+        entityManagerFactory.close();
+        return "mark";
+    }
+
+    @RequestMapping("/unmark")
+    public String chooseMovieToUnmark(Model model) {
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("myDatabase");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        TypedQuery<Movie> query = entityManager.createQuery("select m from Movie m", Movie.class);
+        model.addAttribute("movies", query.getResultList());
+
+        entityManager.close();
+        entityManagerFactory.close();
+        return "unmark";
+    }
+
+    @RequestMapping("/mark-{id}")
+    public String markMovie(@PathVariable("id") Long id, Model model) {
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("myDatabase");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        entityManager.getTransaction().begin();
+        Movie movie = entityManager.find(Movie.class, id);
+
+        if (movie.getTitle().startsWith("WYPOŻYCZONY")) {
+            return "alreadyDoneMark";
+        } else {
+
+            movieDao.setMarkMovie(movie.getTitle(), movie);
+            entityManager.merge(movie);
+            entityManager.getTransaction().commit();
+            return "doneMark";
+        }
+    }
+
+    @RequestMapping("/unmark-{id}")
+    public String unmarkMovie(@PathVariable("id") Long id) {
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("myDatabase");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        entityManager.getTransaction().begin();
+        Movie movie = entityManager.find(Movie.class, id);
+
+        if (!(movie.getTitle().startsWith("WYPOŻYCZONY"))) {
+            return "alreadyDoneUnmark";
+        } else {
+
+            movieDao.deleteMovie(movie.getTitle(), movie);
+            entityManager.merge(movie);
+            entityManager.getTransaction().commit();
+            return "doneUnmark";
+        }
     }
 }
